@@ -4,12 +4,23 @@
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { TimePicker } from "antd";
+import {
+  TimePicker,
+  DatePicker,
+  Input,
+  Button,
+  Switch,
+  Alert,
+  Card,
+} from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import "dayjs/locale/pt-br";
 
-// Configurar dayjs para aceitar formato HH:mm
+const { TextArea } = Input;
+
 dayjs.extend(customParseFormat);
+dayjs.locale("pt-br");
 
 export default function NovoEvento() {
   const router = useRouter();
@@ -236,70 +247,93 @@ export default function NovoEvento() {
             </p>
           </div>
 
-          {/* Mensagens de feedback */}
+          {/* Mensagens de feedback - usando Alert */}
           {error && (
-            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
-              {error}
-            </div>
+            <Alert
+              title="Erro"
+              description={error}
+              type="error"
+              closable
+              onClose={() => setError("")}
+              className="mb-6"
+            />
           )}
 
           {success && (
-            <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
-              {success}
-            </div>
+            <Alert
+              title="Sucesso!"
+              description={success}
+              type="success"
+              showIcon
+              className="mb-6"
+            />
           )}
-
           {/* Formulário */}
           <form onSubmit={handleSubmit}>
-            {/* Título do Evento */}
+            {/* Título do Evento - Ant Design Input */}
             <div className="mb-6">
               <label className="block text-gray-700 font-medium mb-2">
                 Título do Evento *
               </label>
-              <input
-                type="text"
+              <Input
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                size="large"
                 placeholder="Ex: Festa de Aniversário"
+                maxLength={100}
+                showCount
               />
             </div>
 
-            {/* Descrição */}
+            {/* Descrição - Ant Design TextArea */}
             <div className="mb-6">
               <label className="block text-gray-700 font-medium mb-2">
                 Descrição
               </label>
-              <textarea
+              <TextArea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                rows={3}
+                size="large"
                 placeholder="Descreva seu evento (opcional)"
+                maxLength={500}
+                showCount
               />
             </div>
 
-            {/* Data e Horários - NOVA VERSÃO COM ANT DESIGN */}
+            {/* Data e Horários */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               {/* Data */}
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Data *
                 </label>
-                <input
-                  type="date"
-                  name="event_date"
-                  value={formData.event_date}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  value={
+                    formData.event_date
+                      ? dayjs(formData.event_date, "YYYY-MM-DD")
+                      : null
+                  }
+                  onChange={(date) => {
+                    setFormData({
+                      ...formData,
+                      event_date: date ? date.format("YYYY-MM-DD") : "",
+                    });
+                  }}
+                  placeholder="Selecione a data"
+                  size="large"
+                  className="w-full"
+                  disabledDate={(current) => {
+                    return current && current < dayjs().startOf("day");
+                  }}
                 />
               </div>
 
-              {/* Hora de Início com TimePicker */}
+              {/* Hora de Início */}
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Hora Início *
@@ -323,11 +357,10 @@ export default function NovoEvento() {
                   className="w-full"
                   showNow={false}
                   needConfirm={false}
-                  required
                 />
               </div>
 
-              {/* Hora de Término com TimePicker */}
+              {/* Hora de Término */}
               <div>
                 <label className="block text-gray-700 font-medium mb-2">
                   Hora Fim
@@ -354,35 +387,33 @@ export default function NovoEvento() {
               </div>
             </div>
 
-            {/* Seção de Endereço */}
-            <div className="mb-6 p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Endereço do Evento
-              </h3>
-
+            {/* Seção de Endereço com Card */}
+            <Card
+              title="Endereço do Evento"
+              className="mb-6"
+              styles={{ body: { padding: "24px" } }}
+            >
               {/* CEP */}
               <div className="mb-4">
                 <label className="block text-gray-700 font-medium mb-2">
                   CEP *
                 </label>
-                <input
-                  type="text"
+                <Input
                   name="address_cep"
                   value={formData.address_cep}
                   onChange={handleChange}
                   onBlur={handleCepBlur}
                   required
-                  maxLength="9"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    cepValidation.type === "error"
-                      ? "border-red-300 bg-red-50"
-                      : cepValidation.type === "success"
-                      ? "border-green-300 bg-green-50"
-                      : cepValidation.type === "warning"
-                      ? "border-yellow-300 bg-yellow-50"
-                      : "border-gray-300"
-                  }`}
+                  maxLength={9}
+                  size="large"
                   placeholder="00000-000"
+                  status={
+                    cepValidation.type === "error"
+                      ? "error"
+                      : cepValidation.type === "warning"
+                      ? "warning"
+                      : ""
+                  }
                 />
 
                 {loadingAddress && (
@@ -437,27 +468,26 @@ export default function NovoEvento() {
                     <label className="block text-gray-700 font-medium mb-2">
                       Rua
                     </label>
-                    <input
-                      type="text"
+                    <Input
                       value={addressFields.street}
                       readOnly
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                      size="large"
+                      disabled
                     />
                   </div>
 
-                  {/* Número e Complemento lado a lado */}
+                  {/* Número e Complemento */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
                         Número *
                       </label>
-                      <input
-                        type="text"
+                      <Input
                         name="address_number"
                         value={formData.address_number}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        size="large"
                         placeholder="Ex: 123"
                       />
                     </div>
@@ -466,12 +496,11 @@ export default function NovoEvento() {
                       <label className="block text-gray-700 font-medium mb-2">
                         Complemento
                       </label>
-                      <input
-                        type="text"
+                      <Input
                         name="address_complement"
                         value={formData.address_complement}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        size="large"
                         placeholder="Apto, Bloco, etc"
                       />
                     </div>
@@ -483,11 +512,11 @@ export default function NovoEvento() {
                       <label className="block text-gray-700 font-medium mb-2">
                         Bairro
                       </label>
-                      <input
-                        type="text"
+                      <Input
                         value={addressFields.neighborhood}
                         readOnly
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                        size="large"
+                        disabled
                       />
                     </div>
 
@@ -495,11 +524,11 @@ export default function NovoEvento() {
                       <label className="block text-gray-700 font-medium mb-2">
                         Cidade
                       </label>
-                      <input
-                        type="text"
+                      <Input
                         value={addressFields.city}
                         readOnly
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                        size="large"
+                        disabled
                       />
                     </div>
 
@@ -507,85 +536,112 @@ export default function NovoEvento() {
                       <label className="block text-gray-700 font-medium mb-2">
                         Estado
                       </label>
-                      <input
-                        type="text"
+                      <Input
                         value={addressFields.state}
                         readOnly
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                        size="large"
+                        disabled
                       />
                     </div>
                   </div>
 
                   {/* Endereço completo (preview) */}
                   {formData.address_full && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-sm text-gray-600 mb-1">
-                        <strong>Endereço completo:</strong>
-                      </p>
-                      <p className="text-sm text-green-700">
-                        {formData.address_full}
-                      </p>
-                    </div>
+                    <Alert
+                      title="Endereço completo"
+                      description={formData.address_full}
+                      type="success"
+                      showIcon
+                      className="mt-4"
+                    />
                   )}
                 </>
               )}
-            </div>
+            </Card>
 
-            {/* Checkboxes de Permissões */}
-            <div className="mb-6 space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="allow_modifications"
-                  checked={formData.allow_modifications}
-                  onChange={handleChange}
-                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-3 text-gray-700">
-                  Permitir que convidados modifiquem suas confirmações
-                </label>
+            {/* Permissões com Switch */}
+            <Card
+              title="Permissões do Convite"
+              className="mb-6"
+              styles={{ body: { padding: "24px" } }}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-700 font-medium">
+                      Permitir modificações
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Convidados podem alterar suas confirmações
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.allow_modifications}
+                    onChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        allow_modifications: checked,
+                      });
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-700 font-medium">
+                      Permitir cancelamentos
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Convidados podem cancelar suas confirmações
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.allow_cancellations}
+                    onChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        allow_cancellations: checked,
+                      });
+                    }}
+                  />
+                </div>
               </div>
+            </Card>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="allow_cancellations"
-                  checked={formData.allow_cancellations}
-                  onChange={handleChange}
-                  className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label className="ml-3 text-gray-700">
-                  Permitir que convidados cancelem suas confirmações
-                </label>
-              </div>
-            </div>
-
-            {/* Botões */}
+            {/* Botões - Ant Design */}
             <div className="flex gap-4">
-              <button
-                type="button"
+              <Button
+                size="large"
                 onClick={() => router.push("/dashboard")}
-                className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition duration-200"
+                className="flex-1"
               >
                 Cancelar
-              </button>
+              </Button>
 
-              <button
-                type="submit"
+              <Button
+                type="primary"
+                size="large"
+                htmlType="submit"
+                loading={loading}
                 disabled={
-                  loading || !formData.address_full || !formData.start_time
+                  !formData.address_full ||
+                  !formData.start_time ||
+                  !formData.event_date
                 }
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="flex-1"
               >
-                {loading ? "Criando..." : "Criar Evento"}
-              </button>
+                Criar Evento
+              </Button>
             </div>
 
             {/* Nota */}
             {!formData.address_full && addressFields.street && (
-              <p className="mt-4 text-sm text-orange-600 text-center">
-                ⚠️ Preencha o número do endereço para continuar
-              </p>
+              <Alert
+                title="Preencha o número do endereço para continuar"
+                type="warning"
+                showIcon
+                className="mt-4"
+              />
             )}
           </form>
         </div>
