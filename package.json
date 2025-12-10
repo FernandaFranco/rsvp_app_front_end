@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "antd": "^6.1.0",
     "axios": "^1.13.2",
+    "dayjs": "^1.11.19",
     "next": "16.0.7",
     "react": "19.2.0",
     "react-dom": "19.2.0"

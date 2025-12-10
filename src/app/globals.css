@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Reset alguns estilos do Ant Design para melhor integração */
+.ant-picker {
+  width: 100%;
+}
