@@ -1,0 +1,467 @@
+// src/app/eventos/[id]/page.js
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import axios from "axios";
+import {
+  Button,
+  Table,
+  Card,
+  Statistic,
+  Modal,
+  Input,
+  Tag,
+  Space,
+  Popconfirm,
+  Alert,
+  App,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  DownloadOutlined,
+  CopyOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+
+export default function EventoDetalhes() {
+  const params = useParams();
+  const router = useRouter();
+  const eventId = params.id;
+  const { message } = App.useApp();
+
+  const [event, setEvent] = useState(null);
+  const [attendees, setAttendees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingAttendee, setEditingAttendee] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    num_adults: 1,
+    num_children: 0,
+    comments: "",
+  });
+
+  useEffect(() => {
+    loadEventDetails();
+    loadAttendees();
+  }, [eventId]);
+
+  // Carregar detalhes do evento
+  const loadEventDetails = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/events/my-events`,
+        { withCredentials: true }
+      );
+
+      const foundEvent = response.data.events.find(
+        (e) => e.id === parseInt(eventId)
+      );
+
+      if (foundEvent) {
+        setEvent(foundEvent);
+      } else {
+        message.error("Evento não encontrado");
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      console.error("Erro ao carregar evento:", err);
+      message.error("Erro ao carregar evento");
+    }
+  };
+
+  // Carregar lista de convidados
+  const loadAttendees = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/events/${eventId}/attendees`,
+        { withCredentials: true }
+      );
+      setAttendees(response.data.attendees);
+    } catch (err) {
+      console.error("Erro ao carregar convidados:", err);
+      message.error("Erro ao carregar convidados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Copiar link do convite
+  const copyInviteLink = () => {
+    if (event) {
+      const link = `${window.location.origin}/invite/${event.slug}`;
+      navigator.clipboard.writeText(link);
+      message.success("Link copiado para a área de transferência!");
+    }
+  };
+
+  // Exportar CSV
+  const exportCSV = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/events/${eventId}/export-csv`,
+        {
+          withCredentials: true,
+          responseType: "blob", // Importante para download de arquivo
+        }
+      );
+
+      // Criar download do arquivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `evento_${eventId}_convidados.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      message.success("CSV exportado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao exportar CSV:", err);
+      message.error("Erro ao exportar CSV");
+    }
+  };
+
+  // Abrir modal de edição
+  const openEditModal = (attendee) => {
+    setEditingAttendee(attendee);
+    setEditForm({
+      name: attendee.name,
+      num_adults: attendee.num_adults,
+      num_children: attendee.num_children,
+      comments: attendee.comments || "",
+    });
+    setEditModalVisible(true);
+  };
+
+  // Salvar edição
+  const handleSaveEdit = async () => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/events/${eventId}/attendees/${editingAttendee.id}`,
+        editForm,
+        { withCredentials: true }
+      );
+
+      message.success("Convidado atualizado com sucesso!");
+      setEditModalVisible(false);
+      loadAttendees();
+      loadEventDetails(); // Recarregar estatísticas
+    } catch (err) {
+      console.error("Erro ao atualizar convidado:", err);
+      message.error("Erro ao atualizar convidado");
+    }
+  };
+
+  // Deletar convidado
+  const handleDelete = async (attendeeId) => {
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/events/${eventId}/attendees/${attendeeId}`,
+        { withCredentials: true }
+      );
+
+      message.success("Convidado removido com sucesso!");
+      loadAttendees();
+      loadEventDetails(); // Recarregar estatísticas
+    } catch (err) {
+      console.error("Erro ao deletar convidado:", err);
+      message.error("Erro ao deletar convidado");
+    }
+  };
+
+  // Formatar data
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  // Colunas da tabela
+  const columns = [
+    {
+      title: "Nome",
+      dataIndex: "name",
+      key: "name",
+      sorter: (a, b) => a.name.localeCompare(b.name),
+    },
+    {
+      title: "WhatsApp",
+      dataIndex: "whatsapp_number",
+      key: "whatsapp",
+      render: (phone) => (
+        <a
+          href={`https://wa.me/${phone}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {phone}
+        </a>
+      ),
+    },
+    {
+      title: "Adultos",
+      dataIndex: "num_adults",
+      key: "adults",
+      align: "center",
+      sorter: (a, b) => a.num_adults - b.num_adults,
+    },
+    {
+      title: "Crianças",
+      dataIndex: "num_children",
+      key: "children",
+      align: "center",
+      sorter: (a, b) => a.num_children - b.num_children,
+    },
+    {
+      title: "Comentários",
+      dataIndex: "comments",
+      key: "comments",
+      ellipsis: true,
+      render: (text) => text || "-",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color={status === "confirmed" ? "green" : "red"}>
+          {status === "confirmed" ? "Confirmado" : "Cancelado"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Ações",
+      key: "actions",
+      align: "center",
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => openEditModal(record)}
+          >
+            Editar
+          </Button>
+          <Popconfirm
+            title="Tem certeza que deseja remover este convidado?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Sim"
+            cancelText="Não"
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              Deletar
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  if (loading || !event) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Button
+              type="link"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => router.push("/dashboard")}
+            >
+              Voltar ao Dashboard
+            </Button>
+            <h1 className="text-xl font-bold text-indigo-600">Venha</h1>
+            <div className="w-40"></div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Conteúdo principal */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header do evento */}
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {event.title}
+          </h2>
+          <div className="flex flex-wrap gap-4 text-gray-600">
+            <span className="flex items-center">
+              <CalendarOutlined className="mr-2" />
+              {formatDate(event.event_date)}
+            </span>
+            <span className="flex items-center">
+              <ClockCircleOutlined className="mr-2" />
+              {event.start_time}
+            </span>
+          </div>
+        </div>
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <Statistic
+              title="Confirmados"
+              value={event.attendee_count}
+              prefix={<TeamOutlined />}
+              styles={{ value: { color: "#4f46e5" } }}
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Total Adultos"
+              value={event.total_adults}
+              styles={{ value: { color: "#10b981" } }}
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Total Crianças"
+              value={event.total_children}
+              styles={{ value: { color: "#3b82f6" } }}
+            />
+          </Card>
+          <Card>
+            <Statistic
+              title="Total Pessoas"
+              value={event.total_adults + event.total_children}
+              styles={{ value: { color: "#8b5cf6" } }}
+            />
+          </Card>
+        </div>
+
+        {/* Ações */}
+        <Card className="mb-6">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="primary"
+              icon={<CopyOutlined />}
+              onClick={copyInviteLink}
+            >
+              Copiar Link do Convite
+            </Button>
+            <Button icon={<DownloadOutlined />} onClick={exportCSV}>
+              Exportar CSV
+            </Button>
+          </div>
+        </Card>
+
+        {/* Tabela de convidados */}
+        <Card title={`Convidados (${attendees.length})`}>
+          {attendees.length === 0 ? (
+            <Alert
+              title="Nenhum convidado ainda"
+              description="Compartilhe o link do convite para que as pessoas possam confirmar presença!"
+              type="info"
+              showIcon
+            />
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={attendees}
+              rowKey="id"
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showTotal: (total) => `Total de ${total} convidados`,
+              }}
+              scroll={{ x: "max-content" }}
+            />
+          )}
+        </Card>
+      </main>
+
+      {/* Modal de edição */}
+      <Modal
+        title="Editar Convidado"
+        open={editModalVisible}
+        onOk={handleSaveEdit}
+        onCancel={() => setEditModalVisible(false)}
+        okText="Salvar"
+        cancelText="Cancelar"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Nome</label>
+            <Input
+              value={editForm.name}
+              onChange={(e) =>
+                setEditForm({ ...editForm, name: e.target.value })
+              }
+              placeholder="Nome do convidado"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Adultos
+              </label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.num_adults}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    num_adults: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Crianças
+              </label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.num_children}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    num_children: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Comentários
+            </label>
+            <Input.TextArea
+              rows={3}
+              value={editForm.comments}
+              onChange={(e) =>
+                setEditForm({ ...editForm, comments: e.target.value })
+              }
+              placeholder="Observações ou restrições alimentares"
+            />
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}

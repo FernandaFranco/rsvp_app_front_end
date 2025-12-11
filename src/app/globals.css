@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
-/* Reset alguns estilos do Ant Design para melhor integração */
-.ant-picker {
+/* Ant Design customization */
+.ant-picker,
+.ant-input,
+.ant-input-textarea {
   width: 100%;
+}
+
+.ant-card {
+  border-radius: 8px;
+}
+
+.ant-switch {
+  background-color: #d1d5db;
+}
+
+.ant-switch-checked {
+  background-color: #4f46e5;
 }

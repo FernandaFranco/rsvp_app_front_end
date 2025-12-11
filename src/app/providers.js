@@ -1,7 +1,7 @@
 // src/app/providers.js
 "use client";
 
-import { ConfigProvider } from "antd";
+import { ConfigProvider, App } from "antd";
 import locale from "antd/locale/pt_BR";
 
 export default function Providers({ children }) {
@@ -15,7 +15,7 @@ export default function Providers({ children }) {
         },
       }}
     >
-      {children}
+      <App>{children}</App>
     </ConfigProvider>
   );
 }
