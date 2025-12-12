@@ -162,7 +162,7 @@ export default function NovoEvento() {
       fullAddress += `, ${data.address_complement}`;
     }
 
-    fullAddress += `, ${addressFields.neighborhood}, ${addressFields.city} - ${addressFields.state}, CEP ${data.address_cep}`;
+    fullAddress += `, ${addressFields.neighborhood}, ${addressFields.city} - ${addressFields.state}, CEP ${data.address_cep}, Brasil`;
 
     setFormData({
       ...data,
@@ -181,7 +181,7 @@ export default function NovoEvento() {
       fullAddress += `, ${data.address_complement}`;
     }
 
-    fullAddress += `, ${fields.neighborhood}, ${fields.city} - ${fields.state}, CEP ${data.address_cep}`;
+    fullAddress += `, ${fields.neighborhood}, ${fields.city} - ${fields.state}, CEP ${data.address_cep}, Brasil`;
 
     setFormData((prev) => ({
       ...prev,
@@ -196,6 +196,7 @@ export default function NovoEvento() {
     setSuccess("");
 
     try {
+      // O backend fará a geocodificação automaticamente
       const response = await axios.post(
         "http://localhost:5000/api/events/create",
         formData,

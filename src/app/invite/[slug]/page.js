@@ -72,48 +72,126 @@ export default function ConvitePage() {
   };
 
   // Buscar clima
+  // Buscar clima para a data do evento
   const fetchWeather = async () => {
     try {
       // Extrair cidade do endereço
       const cityMatch = event.address_full.match(/,\s*([^,]+)\s*-\s*[A-Z]{2}/);
-      const city = cityMatch ? cityMatch[1] : null;
+      const city = cityMatch ? cityMatch[1].trim() : null;
 
       if (!city) {
-        console.log("Não foi possível extrair a cidade do endereço");
+        console.log("❌ Não foi possível extrair a cidade do endereço");
         return;
       }
 
-      // OpenWeatherMap API (gratuita - você precisa criar uma conta e obter API key)
-      // Para desenvolvimento, vou usar dados mock
-      // Substitua 'YOUR_API_KEY' pela sua chave real da OpenWeatherMap
+      console.log("🌤️ Buscando previsão do tempo para:", city);
 
-      const OPENWEATHER_API_KEY = "YOUR_API_KEY"; // ⚠️ VOCÊ PRECISA OBTER UMA CHAVE
+      const WEATHER_API_KEY = "141058784c6a4cb893930820251212";
 
-      // Se não tiver API key, usar dados simulados
-      if (OPENWEATHER_API_KEY === "YOUR_API_KEY") {
+      if (!WEATHER_API_KEY || WEATHER_API_KEY === "SUA_CHAVE_WEATHERAPI") {
+        console.log("⚠️ API Key não configurada");
+        return;
+      }
+
+      // Calcular quantos dias faltam para o evento
+      const eventDate = new Date(event.event_date + "T" + event.start_time);
+      const today = new Date();
+      const daysUntilEvent = Math.ceil(
+        (eventDate - today) / (1000 * 60 * 60 * 24)
+      );
+
+      console.log("📅 Dias até o evento:", daysUntilEvent);
+
+      // WeatherAPI.com tem forecast gratuito de até 3 dias
+      if (daysUntilEvent > 3) {
+        console.log("⚠️ Evento muito distante, previsão não disponível");
         setWeather({
-          temp: 28,
-          description: "Céu limpo",
-          icon: "01d",
-          humidity: 65,
-          feelsLike: 30,
+          temp: null,
+          description:
+            "Previsão disponível apenas para eventos nos próximos 3 dias",
+          icon: null,
+          humidity: null,
+          feelsLike: null,
+          isUnavailable: true,
         });
         return;
       }
 
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city},BR&appid=${OPENWEATHER_API_KEY}&units=metric&lang=pt_br`
+      if (daysUntilEvent < 0) {
+        console.log("⚠️ Evento já passou");
+        return;
+      }
+
+      // Buscar previsão
+      const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${encodeURIComponent(
+        city
+      )},Brazil&days=${Math.max(1, daysUntilEvent)}&lang=pt`;
+
+      console.log("📡 Buscando forecast...");
+
+      const response = await axios.get(url);
+
+      console.log("✅ Forecast recebido:", response.data);
+
+      // Encontrar a previsão para a data do evento
+      const eventDateStr = event.event_date; // YYYY-MM-DD
+      const forecastDay = response.data.forecast.forecastday.find(
+        (day) => day.date === eventDateStr
       );
 
-      setWeather({
-        temp: Math.round(response.data.main.temp),
-        description: response.data.weather[0].description,
-        icon: response.data.weather[0].icon,
-        humidity: response.data.main.humidity,
-        feelsLike: Math.round(response.data.main.feels_like),
+      if (!forecastDay) {
+        console.log("❌ Previsão não encontrada para a data do evento");
+        return;
+      }
+
+      // Encontrar o horário mais próximo do evento
+      const eventHour = parseInt(event.start_time.split(":")[0]);
+
+      // Buscar previsão hora a hora
+      let closestHour = forecastDay.hour.find((h) => {
+        const hourNum = parseInt(h.time.split(" ")[1].split(":")[0]);
+        return hourNum === eventHour;
       });
+
+      // Se não encontrar hora exata, pegar a mais próxima
+      if (!closestHour) {
+        closestHour = forecastDay.hour.reduce((prev, curr) => {
+          const prevHour = parseInt(prev.time.split(" ")[1].split(":")[0]);
+          const currHour = parseInt(curr.time.split(" ")[1].split(":")[0]);
+          return Math.abs(currHour - eventHour) < Math.abs(prevHour - eventHour)
+            ? curr
+            : prev;
+        });
+      }
+
+      // Usar previsão hora a hora se disponível, senão usar média do dia
+      const weatherData = closestHour || forecastDay.day;
+
+      setWeather({
+        temp: Math.round(
+          closestHour ? closestHour.temp_c : weatherData.avgtemp_c
+        ),
+        description: closestHour
+          ? closestHour.condition.text
+          : weatherData.condition.text,
+        icon: closestHour
+          ? closestHour.condition.icon
+          : weatherData.condition.icon,
+        humidity: closestHour ? closestHour.humidity : weatherData.avghumidity,
+        feelsLike: Math.round(
+          closestHour ? closestHour.feelslike_c : weatherData.avgtemp_c
+        ),
+        isUnavailable: false,
+        forecastTime: closestHour ? closestHour.time : null,
+      });
+
+      console.log(
+        "✅ Previsão configurada para:",
+        closestHour ? closestHour.time : "média do dia"
+      );
     } catch (err) {
-      console.error("Erro ao buscar clima:", err);
+      console.error("❌ Erro ao buscar clima:", err);
+      console.error("Detalhes:", err.response?.data);
     }
   };
 
@@ -297,27 +375,48 @@ END:VCALENDAR`;
           </Button>
         </Card>
 
-        {/* Mapa */}
-        <Card title="Localização" className="mb-6">
-          <div style={{ height: "300px" }}>
-            <MapWithNoSSR address={event.address_full} />
-          </div>
-        </Card>
+        {/* Mapa - só mostra se tiver coordenadas */}
+        {event.latitude && event.longitude && (
+          <Card title="Localização" className="mb-6">
+            <div style={{ height: "300px" }}>
+              <MapWithNoSSR
+                address={event.address_full}
+                latitude={event.latitude}
+                longitude={event.longitude}
+              />
+            </div>
+          </Card>
+        )}
 
         {/* Clima */}
-        {weather && (
+        {weather && !weather.isUnavailable && (
           <Card className="mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <CloudOutlined className="text-4xl text-blue-500 mr-4" />
+                {weather.icon ? (
+                  <img
+                    src={`https:${weather.icon}`}
+                    alt={weather.description}
+                    className="w-16 h-16 mr-4"
+                  />
+                ) : (
+                  <CloudOutlined className="text-4xl text-blue-500 mr-4" />
+                )}
                 <div>
-                  <p className="text-gray-500 text-sm">Previsão do Tempo</p>
+                  <p className="text-gray-500 text-sm">
+                    Previsão para o dia do evento
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {weather.temp}°C
                   </p>
                   <p className="text-gray-600 capitalize">
                     {weather.description}
                   </p>
+                  {weather.forecastTime && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Previsão para {weather.forecastTime.split(" ")[1]}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
@@ -327,6 +426,19 @@ END:VCALENDAR`;
                 <p className="text-lg font-medium">{weather.humidity}%</p>
               </div>
             </div>
+          </Card>
+        )}
+
+        {/* Mensagem se previsão não disponível */}
+        {weather && weather.isUnavailable && (
+          <Card className="mb-6">
+            <Alert
+              message="Previsão do tempo não disponível"
+              description={weather.description}
+              type="info"
+              showIcon
+              icon={<CloudOutlined />}
+            />
           </Card>
         )}
 
