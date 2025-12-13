@@ -27,6 +27,7 @@ import {
   ClockCircleOutlined,
   EnvironmentOutlined,
   TeamOutlined,
+  CopyOutlined as DuplicateOutlined, // Renomear para não conflitar
 } from "@ant-design/icons";
 
 export default function EventoDetalhes() {
@@ -176,9 +177,73 @@ export default function EventoDetalhes() {
     }
   };
 
+  // ... após handleDelete (convidado), adicione:
+
+  // ========== FUNÇÕES DE GERENCIAMENTO DO EVENTO ==========
+
+  // Editar evento
+  const handleEditEvent = () => {
+    router.push(`/eventos/${eventId}/editar`);
+  };
+
+  // Duplicar evento
+  const handleDuplicateEvent = async () => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/events/${eventId}/duplicate`,
+        {},
+        { withCredentials: true }
+      );
+
+      message.success("Evento duplicado com sucesso!");
+
+      setTimeout(() => {
+        router.push(`/eventos/${response.data.event.id}`);
+      }, 1000);
+    } catch (err) {
+      console.error("Erro ao duplicar evento:", err);
+      message.error("Erro ao duplicar evento");
+    }
+  };
+
+  // Deletar evento
+  const handleDeleteEvent = () => {
+    Modal.confirm({
+      title: "Deletar Evento?",
+      content: (
+        <div>
+          <p>Tem certeza que deseja deletar este evento?</p>
+          <p className="text-red-600 mt-2">
+            <strong>Atenção:</strong> Todos os {attendees.length} convidados e
+            suas confirmações serão removidos permanentemente. Esta ação não
+            pode ser desfeita.
+          </p>
+        </div>
+      ),
+      okText: "Sim, deletar",
+      cancelText: "Cancelar",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/events/${eventId}`, {
+            withCredentials: true,
+          });
+
+          message.success("Evento deletado com sucesso");
+          router.push("/dashboard");
+        } catch (err) {
+          console.error("Erro ao deletar evento:", err);
+          message.error("Erro ao deletar evento");
+        }
+      },
+    });
+  };
+
   // Formatar data
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Parse manual para evitar conversão UTC
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month é 0-indexed
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "long",
@@ -350,6 +415,7 @@ export default function EventoDetalhes() {
         </div>
 
         {/* Ações */}
+        {/* Ações */}
         <Card className="mb-6">
           <div className="flex flex-wrap gap-3">
             <Button
@@ -361,6 +427,19 @@ export default function EventoDetalhes() {
             </Button>
             <Button icon={<DownloadOutlined />} onClick={exportCSV}>
               Exportar CSV
+            </Button>
+            <Button icon={<EditOutlined />} onClick={handleEditEvent}>
+              Editar Evento
+            </Button>
+            <Button icon={<DuplicateOutlined />} onClick={handleDuplicateEvent}>
+              Duplicar Evento
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteEvent}
+            >
+              Deletar Evento
             </Button>
           </div>
         </Card>

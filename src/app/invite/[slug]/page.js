@@ -275,7 +275,9 @@ END:VCALENDAR`;
 
   // Formatar data
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Parse manual para evitar conversão UTC
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month é 0-indexed
     return date.toLocaleDateString("pt-BR", {
       weekday: "long",
       day: "2-digit",
