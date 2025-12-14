@@ -4,40 +4,52 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Button, Card, Tag, Empty } from "antd";
+import {
+  Button,
+  Card,
+  Tag,
+  Empty,
+  Statistic,
+  Space,
+  Typography,
+  Divider,
+  App,
+} from "antd";
 import {
   PlusOutlined,
   CalendarOutlined,
+  ClockCircleOutlined,
   TeamOutlined,
-  EnvironmentOutlined,
+  UserOutlined,
+  SmileOutlined,
+  CopyOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { DashboardSkeleton } from "../components/LoadingSkeleton";
 import { formatDateRelative } from "../utils/dateUtils";
 
+const { Title, Text, Paragraph } = Typography;
+
 export default function Dashboard() {
   const router = useRouter();
-  const hasFetched = useRef(false); // ← Flag para evitar dupla chamada
+  const { message } = App.useApp(); // ← Hook do Ant Design para mensagens
+  const hasFetched = useRef(false);
 
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Carregar dados quando a página carregar
   useEffect(() => {
-    // Evitar dupla chamada no React Strict Mode
     if (hasFetched.current) return;
     hasFetched.current = true;
-
     loadData();
-  }, []); // ← Array vazio está correto
+  }, []);
 
-  // Combinar chamadas em uma única função
   const loadData = async () => {
     try {
       setLoading(true);
 
-      // Chamar ambas APIs em paralelo
       const [userResponse, eventsResponse] = await Promise.all([
         axios.get("http://localhost:5000/api/auth/me", {
           withCredentials: true,
@@ -52,41 +64,48 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
 
-      // Se for 401 (não autenticado), redirecionar
       if (err.response?.status === 401) {
         router.push("/auth");
       } else {
         setError("Erro ao carregar dados");
+        message.error("Erro ao carregar dados");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fazer logout
   const handleLogout = async () => {
     try {
       await axios.post(
         "http://localhost:5000/api/auth/logout",
         {},
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
+      message.success("Logout realizado com sucesso");
       router.push("/auth");
     } catch (err) {
       console.error("Erro ao fazer logout:", err);
+      message.error("Erro ao fazer logout");
     }
   };
 
-  // LOADING STATE COM SKELETON
+  const copyInviteLink = (e, slug) => {
+    e.stopPropagation(); // Evitar abrir detalhes do evento
+    const link = `${window.location.origin}/invite/${slug}`;
+    navigator.clipboard.writeText(link);
+    message.success("Link copiado para a área de transferência!");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <h1 className="text-2xl font-bold text-indigo-600">Venha</h1>
+              <Title level={2} className="!mb-0 text-indigo-600">
+                Venha
+              </Title>
               <div style={{ width: 100 }}>
                 <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
               </div>
@@ -102,40 +121,39 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header/Navbar */}
+      {/* Navbar */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">Venha</h1>
-            </div>
+            <Title level={2} className="!mb-0 text-indigo-600">
+              Venha
+            </Title>
 
-            {/* User info e logout */}
-            <div className="flex items-center space-x-4">
+            <Space size="middle">
               {user && (
-                <span className="text-gray-700">
-                  Olá, <strong>{user.name}</strong>
-                </span>
+                <Text>
+                  Olá, <Text strong>{user.name}</Text>
+                </Text>
               )}
               <Button onClick={handleLogout}>Sair</Button>
-            </div>
+            </Space>
           </div>
         </div>
       </nav>
 
       {/* Conteúdo principal */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header do Dashboard */}
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Meus Eventos</h2>
-            <p className="text-gray-600 mt-2">
+            <Title level={2} className="!mb-2">
+              Meus Eventos
+            </Title>
+            <Text type="secondary">
               Gerencie seus eventos e acompanhe as confirmações
-            </p>
+            </Text>
           </div>
 
-          {/* Botão para criar novo evento */}
           <Button
             type="primary"
             size="large"
@@ -146,28 +164,19 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Mensagem de erro */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
         {/* Lista de eventos */}
         {events.length === 0 ? (
           <Card className="text-center py-12">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Nenhum evento criado ainda
-                  </h3>
-                  <p className="text-gray-600 mb-6">
+                <Space orientation="vertical" size="small">
+                  <Title level={4}>Nenhum evento criado ainda</Title>
+                  <Text type="secondary">
                     Comece criando seu primeiro evento e compartilhe o convite
                     com seus convidados!
-                  </p>
-                </div>
+                  </Text>
+                </Space>
               }
             >
               <Button
@@ -175,6 +184,7 @@ export default function Dashboard() {
                 size="large"
                 icon={<PlusOutlined />}
                 onClick={() => router.push("/eventos/novo")}
+                className="mt-4"
               >
                 Criar Primeiro Evento
               </Button>
@@ -183,81 +193,114 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <div
+              <Card
                 key={event.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition duration-200 overflow-hidden cursor-pointer fade-in-up"
-                onClick={() => router.push(`/eventos/${event.id}`)}
+                hoverable
+                className="fade-in-up"
+                styles={{
+                  body: { padding: 0 },
+                }}
               >
-                {/* Card Header */}
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
-                  <h3 className="text-xl font-bold text-white truncate">
+                {/* Header do Card com gradiente */}
+                <div
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 cursor-pointer"
+                  onClick={() => router.push(`/eventos/${event.id}`)}
+                >
+                  <Title level={4} className="!text-white !mb-2 truncate">
                     {event.title}
-                  </h3>
-                  <p className="text-indigo-100 mt-1">
-                    {formatDateRelative(event.event_date)} às {event.start_time}
-                  </p>
+                  </Title>
+                  <Space className="text-indigo-100">
+                    <CalendarOutlined />
+                    <Text className="text-indigo-100">
+                      {formatDateRelative(event.event_date)}
+                    </Text>
+                  </Space>
+                  <br />
+                  <Space className="text-indigo-100 mt-1">
+                    <ClockCircleOutlined />
+                    <Text className="text-indigo-100">{event.start_time}</Text>
+                  </Space>
                 </div>
 
-                {/* Card Body */}
+                {/* Body do Card */}
                 <div className="p-6">
-                  {/* Descrição (se houver) */}
+                  {/* Descrição */}
                   {event.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    <Paragraph
+                      ellipsis={{ rows: 2 }}
+                      className="text-gray-600 mb-4"
+                    >
                       {event.description}
-                    </p>
+                    </Paragraph>
                   )}
 
                   {/* Estatísticas */}
                   <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-indigo-600">
-                        {event.attendee_count}
-                      </p>
-                      <p className="text-xs text-gray-500">Confirmados</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">
-                        {event.total_adults}
-                      </p>
-                      <p className="text-xs text-gray-500">Adultos</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">
-                        {event.total_children}
-                      </p>
-                      <p className="text-xs text-gray-500">Crianças</p>
-                    </div>
+                    {/* Confirmados */}
+                    <Card
+                      size="small"
+                      className="text-center border-indigo-200"
+                    >
+                      <Space orientation="vertical" size={0} className="w-full">
+                        <TeamOutlined className="text-2xl text-indigo-600" />
+                        <div className="text-2xl font-bold text-indigo-600">
+                          {event.attendee_count}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: "0.75rem" }}>
+                          Confirmados
+                        </Text>
+                      </Space>
+                    </Card>
+
+                    {/* Adultos */}
+                    <Card size="small" className="text-center border-green-200">
+                      <Space orientation="vertical" size={0} className="w-full">
+                        <UserOutlined className="text-2xl text-green-600" />
+                        <div className="text-2xl font-bold text-green-600">
+                          {event.total_adults}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: "0.75rem" }}>
+                          Adultos
+                        </Text>
+                      </Space>
+                    </Card>
+
+                    {/* Crianças */}
+                    <Card size="small" className="text-center border-blue-200">
+                      <Space orientation="vertical" size={0} className="w-full">
+                        <SmileOutlined className="text-2xl text-blue-600" />
+                        <div className="text-2xl font-bold text-blue-600">
+                          {event.total_children}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: "0.75rem" }}>
+                          Crianças
+                        </Text>
+                      </Space>
+                    </Card>
                   </div>
 
-                  {/* Link do convite */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-500 mb-2">
-                      Link do convite:
-                    </p>
-                    <div className="flex items-center bg-gray-50 rounded px-3 py-2">
-                      <code className="text-sm text-gray-700 flex-1 truncate">
-                        /invite/{event.slug}
-                      </code>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const link = `${window.location.origin}/invite/${event.slug}`;
-                          navigator.clipboard.writeText(link);
-                          alert("Link copiado!");
-                        }}
-                        className="ml-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                      >
-                        Copiar
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  <Divider className="my-4" />
 
-                {/* Card Footer */}
-                <div className="bg-gray-50 px-6 py-3 flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Ver detalhes →</span>
+                  {/* Ações */}
+                  <Space orientation="vertical" className="w-full" size="small">
+                    <Button
+                      block
+                      icon={<EyeOutlined />}
+                      onClick={() => router.push(`/eventos/${event.id}`)}
+                    >
+                      Ver Detalhes
+                    </Button>
+
+                    <Button
+                      block
+                      icon={<CopyOutlined />}
+                      onClick={(e) => copyInviteLink(e, event.slug)}
+                    >
+                      Copiar Link do Convite
+                    </Button>
+                  </Space>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

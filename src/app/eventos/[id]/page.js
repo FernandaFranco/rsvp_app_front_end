@@ -16,6 +16,7 @@ import {
   Popconfirm,
   Alert,
   App,
+  Typography,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -25,12 +26,15 @@ import {
   DeleteOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
-  EnvironmentOutlined,
+  UserOutlined,
+  SmileOutlined,
   TeamOutlined,
   CopyOutlined as DuplicateOutlined,
 } from "@ant-design/icons";
 import { EventDetailsSkeleton } from "../../components/LoadingSkeleton";
 import { formatDateBR } from "../../utils/dateUtils";
+
+const { Text } = Typography;
 
 export default function EventoDetalhes() {
   const params = useParams();
@@ -395,34 +399,44 @@ export default function EventoDetalhes() {
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <Statistic
-              title="Confirmados"
-              value={event.attendee_count}
-              prefix={<TeamOutlined />}
-              styles={{ value: { color: "#4f46e5" } }}
-            />
+          <Card className="text-center">
+            <Space orientation="vertical" size="small" className="w-full">
+              <TeamOutlined className="text-3xl text-indigo-600" />
+              <div className="text-3xl font-bold text-indigo-600">
+                {event.attendee_count}
+              </div>
+              <Text type="secondary">Confirmados</Text>
+            </Space>
           </Card>
-          <Card>
-            <Statistic
-              title="Total Adultos"
-              value={event.total_adults}
-              styles={{ value: { color: "#10b981" } }}
-            />
+
+          <Card className="text-center">
+            <Space orientation="vertical" size="small" className="w-full">
+              <UserOutlined className="text-3xl text-green-600" />
+              <div className="text-3xl font-bold text-green-600">
+                {event.total_adults}
+              </div>
+              <Text type="secondary">Total Adultos</Text>
+            </Space>
           </Card>
-          <Card>
-            <Statistic
-              title="Total Crianças"
-              value={event.total_children}
-              styles={{ value: { color: "#3b82f6" } }}
-            />
+
+          <Card className="text-center">
+            <Space orientation="vertical" size="small" className="w-full">
+              <SmileOutlined className="text-3xl text-blue-600" />
+              <div className="text-3xl font-bold text-blue-600">
+                {event.total_children}
+              </div>
+              <Text type="secondary">Total Crianças</Text>
+            </Space>
           </Card>
-          <Card>
-            <Statistic
-              title="Total Pessoas"
-              value={event.total_adults + event.total_children}
-              styles={{ value: { color: "#8b5cf6" } }}
-            />
+
+          <Card className="text-center">
+            <Space orientation="vertical" size="small" className="w-full">
+              <TeamOutlined className="text-3xl text-purple-600" />
+              <div className="text-3xl font-bold text-purple-600">
+                {event.total_adults + event.total_children}
+              </div>
+              <Text type="secondary">Total Pessoas</Text>
+            </Space>
           </Card>
         </div>
 
