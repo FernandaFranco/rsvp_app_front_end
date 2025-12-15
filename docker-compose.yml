@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Backend Flask
+  backend:
+    build: ../backend
+    container_name: venha_backend
+    ports:
+      - "5000:5000"
+    volumes:
+      # Montar código local no container (para editar em tempo real!)
+      - ../backend:/app
+      # Excluir venv do volume (usar dependências do container)
+      - /app/venv
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - FRONTEND_URL=http://localhost:3000
+    env_file:
+      - ../backend/.env
+    networks:
+      - venha_network
+    restart: unless-stopped
+
+  # Frontend Next.js
+  frontend:
+    build: .
+    container_name: venha_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Montar código local no container (para editar em tempo real!)
+      - .:/app
+      # Excluir node_modules do volume (usar dependências do container)
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+      - WATCHPACK_POLLING=true
+    env_file:
+      - .env.local
+    networks:
+      - venha_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  venha_network:
+    driver: bridge
