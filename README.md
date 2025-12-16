@@ -43,7 +43,7 @@ O sistema Venha utiliza uma arquitetura de três camadas (Frontend, Backend API,
 - **Ant Design** - Biblioteca de componentes UI
 - **Axios** - Cliente HTTP para requisições à API
 - **Google Maps API** - Visualização de mapas
-- **Open-Meteo API** - Previsão do tempo
+- **WeatherAPI** - Previsão do tempo
 - **Tailwind CSS** - Estilização
 
 ## 🚀 Como Rodar o Projeto
@@ -232,6 +232,173 @@ Chave de API do WeatherAPI.com para exibição de previsão do tempo nos convite
 5. Cole no arquivo `.env.local`
 
 **Limitações:** A versão gratuita fornece previsão de até 3 dias. Eventos com data superior a 3 dias no futuro não exibirão previsão do tempo.
+
+## 🌐 APIs Externas
+
+O sistema Venha integra-se com **4 APIs externas** para fornecer funcionalidades completas. Abaixo está a documentação detalhada de cada integração:
+
+### 1. Google Maps JavaScript API
+
+**URL:** https://developers.google.com/maps/documentation/javascript
+
+**Propósito:** Exibição de mapas interativos nas páginas de convite e criação de eventos, permitindo que convidados visualizem a localização exata do evento.
+
+**Licença/Custo:**
+- Plano gratuito com crédito mensal de $200 USD
+- Primeiras 28.000 carregamentos de mapa dinâmico/mês são gratuitos
+- Cobrança baseada em uso acima do limite gratuito
+- Licença: Proprietária (Google)
+
+**Registro:**
+1. Criar conta no [Google Cloud Console](https://console.cloud.google.com)
+2. Criar ou selecionar um projeto
+3. Ativar a API "Maps JavaScript API"
+4. Criar credenciais (Chave de API)
+5. (Recomendado) Configurar restrições de domínio/aplicativo
+
+**Uso no Frontend:**
+- Componente: [src/app/components/EventMap.js](src/app/components/EventMap.js)
+- Biblioteca: `@react-google-maps/api`
+- Funcionalidade: Renderização de mapa com marcador na localização do evento
+- Páginas que utilizam: `/invite/[slug]` (página do convite), `/eventos/novo` (validação de endereço)
+
+**Endpoints/Features utilizados:**
+- Maps JavaScript API para renderização de mapas
+- Marker API para posicionamento de marcadores
+
+---
+
+### 2. WeatherAPI
+
+**URL:** https://www.weatherapi.com/
+
+**Propósito:** Exibição de previsão do tempo na página do convite, mostrando as condições climáticas esperadas para a data do evento.
+
+**Licença/Custo:**
+- Plano gratuito: 1.000.000 chamadas/mês
+- Previsão até 3 dias no futuro (plano gratuito)
+- Planos pagos disponíveis para previsões mais longas
+- Licença: Proprietária
+
+**Registro:**
+1. Acessar [WeatherAPI.com](https://www.weatherapi.com/)
+2. Criar conta gratuita
+3. Acessar "My Account" → "API Keys"
+4. Copiar a chave gerada
+
+**Uso no Frontend:**
+- Componente: [src/app/components/WeatherWidget.js](src/app/components/WeatherWidget.js)
+- Biblioteca: `axios` para requisições HTTP
+- Funcionalidade: Exibir temperatura, condição climática e ícone do tempo
+- Páginas que utilizam: `/invite/[slug]` (página do convite)
+
+**Endpoints utilizados:**
+- `GET /v1/forecast.json` - Previsão do tempo para uma data específica
+  - Parâmetros: `key`, `q` (coordenadas lat,lon), `dt` (data do evento), `lang=pt`
+
+**Limitações:**
+- Apenas eventos com data até 3 dias no futuro exibirão previsão (limitação do plano gratuito)
+- Requer coordenadas geográficas (obtidas via Google Geocoding no backend)
+
+---
+
+### 3. Google Geocoding API (via Backend)
+
+**URL:** https://developers.google.com/maps/documentation/geocoding
+
+**Propósito:** Conversão de endereços completos em coordenadas geográficas (latitude/longitude) para exibição em mapas e previsão do tempo.
+
+**Licença/Custo:**
+- Integrado ao mesmo plano do Google Maps
+- Plano gratuito com crédito mensal de $200 USD
+- Primeiras 40.000 requisições/mês são gratuitas
+- Licença: Proprietária (Google)
+
+**Registro:**
+- Mesma configuração do Google Maps (mesma chave de API pode ser usada)
+- Ativar "Geocoding API" no Google Cloud Console
+
+**Uso:**
+- **Backend:** Converte endereços em coordenadas ao criar eventos
+- **Frontend:** Solicita geocoding em tempo real durante criação de evento para validação
+
+**Endpoints utilizados (via Backend):**
+- Backend expõe: `POST /api/events/geocode` que internamente chama Google Geocoding API
+- Fallback: Usa Nominatim (OpenStreetMap) se Google Geocoding falhar
+
+---
+
+### 4. ViaCEP
+
+**URL:** https://viacep.com.br/
+
+**Propósito:** Busca automática de endereços brasileiros a partir do CEP, facilitando o preenchimento de formulários de evento.
+
+**Licença/Custo:**
+- API pública e completamente gratuita
+- Sem necessidade de registro ou chave de API
+- Sem limites de requisições documentados oficialmente
+- Licença: Livre (domínio público)
+
+**Registro:**
+- Não requer registro ou autenticação
+
+**Uso no Frontend:**
+- Arquivos: [src/app/eventos/novo/page.js](src/app/eventos/novo/page.js), [src/app/eventos/[id]/editar/page.js](src/app/eventos/[id]/editar/page.js)
+- Funcionalidade: Busca automática de endereço ao digitar CEP
+- Chamada: **Direta do frontend** (não passa pelo backend)
+
+**Endpoint externo utilizado:**
+- `GET https://viacep.com.br/ws/{cep}/json/`
+  - Retorna: `logradouro`, `complemento`, `bairro`, `localidade`, `uf`, `cep`
+
+**Implementação:**
+```javascript
+const response = await axios.get(
+  `https://viacep.com.br/ws/${cleanCep}/json/`
+);
+```
+
+**Validação:**
+- CEP deve ter exatamente 8 dígitos
+- Aceita com ou sem hífen
+- Exibe feedback em tempo real (incompleto/não encontrado/encontrado)
+
+**Limitações:**
+- Apenas CEPs brasileiros
+- Alguns CEPs muito novos podem não estar disponíveis
+
+---
+
+## 📧 Notificações por Email (Melhoria Futura)
+
+Atualmente, o sistema **simula** o envio de emails. Quando um convidado confirma, modifica ou cancela presença, o backend **imprime o email no console** ao invés de enviar de fato.
+
+**Modo Atual (Simulação):**
+- Emails são logados no console/Docker logs
+- Anfitrião **não recebe** notificações reais por email
+- Útil para desenvolvimento e testes sem configuração adicional
+
+**Melhoria Futura - Integração SendGrid:**
+
+Para habilitar envio real de emails em produção, o sistema está preparado para integração com SendGrid:
+
+- **API:** [SendGrid Email API](https://sendgrid.com/)
+- **Plano gratuito:** 100 emails/dia
+- **Configuração:** Adicionar `SENDGRID_API_KEY` e `SENDER_EMAIL` no backend
+- **Documentação completa:** Veja instruções no README do backend
+
+---
+
+## 🛠️ Configuração de Desenvolvimento
+
+Para facilitar o desenvolvimento, o sistema possui comportamento gracioso quando APIs não estão configuradas:
+
+- **Sem Google Maps:** Mapa não é exibido, restante da aplicação funciona normalmente
+- **Sem WeatherAPI:** Widget de clima não é exibido no convite
+- **Sem Google Geocoding:** Sistema usa Nominatim como fallback (backend)
+- **ViaCEP:** API pública e gratuita, sempre disponível (não requer configuração)
+- **Emails:** Sistema sempre usa modo simulação (logs no console)
 
 ## 🐳 Como Funciona o Docker
 
