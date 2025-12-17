@@ -129,7 +129,7 @@ FLASK_ENV=development
 SECRET_KEY=sua-chave-secreta-aqui    # Gere com: python3 -c "import secrets; print(secrets.token_hex(32))"
 DATABASE_URL=sqlite:///invitations.db
 
-# Opcional - Google Geocoding (usa Nominatim como fallback)
+# Necessária para endereços brasileiros (usa Nominatim como fallback, mas com limitações)
 GOOGLE_GEOCODING_API_KEY=sua-chave-google-aqui
 
 # Frontend URL
@@ -310,7 +310,8 @@ O frontend integra-se com as seguintes APIs externas:
 
 **Uso:**
 - **Backend:** Converte endereços em coordenadas ao criar eventos
-- **Fallback:** Usa Nominatim (OpenStreetMap) se Google Geocoding falhar
+- **Fallback:** Usa Nominatim (OpenStreetMap) se Google Geocoding falhar ou não estiver configurado
+- **Limitação do Fallback:** Nominatim tem precisão limitada com endereços brasileiros
 
 **Endpoints utilizados:**
 - `GET https://maps.googleapis.com/maps/api/geocode/json` (chamado pelo backend)
@@ -421,7 +422,7 @@ O sistema foi projetado para funcionar mesmo quando algumas APIs não estão dis
 |-----|-------------------|-------------------|
 | **Google Maps** | Mapa não renderiza | Convite exibido sem mapa, demais informações intactas |
 | **WeatherAPI** | Widget não aparece | Convite exibido sem previsão do tempo |
-| **Google Geocoding** | Usa Nominatim (OSM) | Nenhum (fallback automático no backend) |
+| **Google Geocoding** | Usa Nominatim (OSM) | Geocoding com precisão limitada (especialmente endereços brasileiros) |
 | **Nominatim** | Evento sem coordenadas | Mapas e clima não aparecem, evento funciona normalmente |
 | **ViaCEP** | Busca manual de endereço | Usuário precisa digitar endereço completo manualmente |
 
