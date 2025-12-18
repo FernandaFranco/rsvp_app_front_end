@@ -6,31 +6,31 @@ import { Card, Skeleton, Space } from "antd";
 export function DashboardSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar skeleton */}
+      {/* Skeleton da navbar */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo skeleton */}
+            {/* Skeleton do logo */}
             <div className="flex items-center gap-2">
               <Skeleton.Avatar active size={32} />
               <Skeleton.Input active size="large" style={{ width: 100 }} />
             </div>
-            {/* User/logout skeleton */}
+            {/* Skeleton do usuário/logout */}
             <Skeleton.Button active size="large" style={{ width: 100 }} />
           </div>
         </div>
       </nav>
 
-      {/* Main content */}
+      {/* Conteúdo principal */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
-          {/* Header skeleton */}
+          {/* Skeleton do header */}
           <div className="flex justify-between items-center">
             <Skeleton.Button active size="large" style={{ width: 200 }} />
             <Skeleton.Button active size="large" style={{ width: 150 }} />
           </div>
 
-          {/* Cards skeleton */}
+          {/* Skeleton dos cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="fade-in-up">
@@ -47,24 +47,24 @@ export function DashboardSkeleton() {
 export function EventDetailsSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar skeleton */}
+      {/* Skeleton da navbar */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Back button skeleton */}
+            {/* Skeleton do botão voltar */}
             <Skeleton.Button active size="default" style={{ width: 150 }} />
-            {/* Logo skeleton */}
+            {/* Skeleton do logo */}
             <div className="flex items-center gap-2">
               <Skeleton.Avatar active size={32} />
               <Skeleton.Input active size="large" style={{ width: 100 }} />
             </div>
-            {/* Spacer */}
+            {/* Espaçador */}
             <div style={{ width: 150 }}></div>
           </div>
         </div>
       </nav>
 
-      {/* Main content */}
+      {/* Conteúdo principal */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Header */}
@@ -73,7 +73,7 @@ export function EventDetailsSkeleton() {
             <Skeleton.Input active size="small" style={{ width: 200 }} block />
           </div>
 
-          {/* Statistics cards */}
+          {/* Cards de estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
@@ -85,7 +85,7 @@ export function EventDetailsSkeleton() {
             ))}
           </div>
 
-          {/* Actions */}
+          {/* Ações */}
           <Card>
             <Space wrap>
               <Skeleton.Button active size="large" />
@@ -96,7 +96,7 @@ export function EventDetailsSkeleton() {
             </Space>
           </Card>
 
-          {/* Table */}
+          {/* Tabela */}
           <Card>
             <Skeleton active paragraph={{ rows: 8 }} />
           </Card>
@@ -109,7 +109,7 @@ export function EventDetailsSkeleton() {
 export function InviteSkeleton() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-      {/* Logo/Header skeleton */}
+      {/* Skeleton do logo/header */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Skeleton.Avatar active size={40} />
@@ -119,7 +119,7 @@ export function InviteSkeleton() {
       </div>
 
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header card */}
+        {/* Card do header */}
         <Card>
           <Space orientation="vertical" style={{ width: "100%" }} size="large">
             <Skeleton.Input active size="large" style={{ width: "100%" }} block />
@@ -127,7 +127,7 @@ export function InviteSkeleton() {
           </Space>
         </Card>
 
-        {/* Map card */}
+        {/* Card do mapa */}
         <Card
           title={<Skeleton.Input active size="small" style={{ width: 100 }} />}
         >
@@ -136,7 +136,7 @@ export function InviteSkeleton() {
           </div>
         </Card>
 
-        {/* Weather card */}
+        {/* Card do clima */}
         <Card>
           <Space style={{ width: "100%" }} size="large">
             <Skeleton.Avatar active size={64} />
@@ -146,7 +146,7 @@ export function InviteSkeleton() {
           </Space>
         </Card>
 
-        {/* Form card */}
+        {/* Card do formulário */}
         <Card
           title={<Skeleton.Input active size="small" style={{ width: 150 }} />}
         >
@@ -160,28 +160,28 @@ export function InviteSkeleton() {
 export function FormSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar skeleton */}
+      {/* Skeleton da navbar */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Back button skeleton */}
+            {/* Skeleton do botão voltar */}
             <Skeleton.Button active size="default" style={{ width: 100 }} />
-            {/* Logo skeleton */}
+            {/* Skeleton do logo */}
             <div className="flex items-center gap-2">
               <Skeleton.Avatar active size={32} />
               <Skeleton.Input active size="large" style={{ width: 100 }} />
             </div>
-            {/* Spacer */}
+            {/* Espaçador */}
             <div style={{ width: 100 }}></div>
           </div>
         </div>
       </nav>
 
-      {/* Form content */}
+      {/* Conteúdo do formulário */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <Space orientation="vertical" style={{ width: "100%" }} size="large">
-            {/* Title section */}
+            {/* Seção do título */}
             <div>
               <Skeleton.Input active size="large" style={{ width: 200 }} block />
               <Skeleton.Input
@@ -192,7 +192,7 @@ export function FormSkeleton() {
               />
             </div>
 
-            {/* Form fields */}
+            {/* Campos do formulário */}
             <Skeleton.Input active size="large" block />
             <Skeleton active paragraph={{ rows: 2 }} />
             <div className="grid grid-cols-3 gap-4">
@@ -202,7 +202,7 @@ export function FormSkeleton() {
             </div>
             <Skeleton active paragraph={{ rows: 4 }} />
 
-            {/* Buttons */}
+            {/* Botões */}
             <div className="grid grid-cols-2 gap-4">
               <Skeleton.Button active size="large" block />
               <Skeleton.Button active size="large" block />
