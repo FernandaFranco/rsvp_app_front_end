@@ -95,7 +95,9 @@ O frontend integra-se com as seguintes APIs externas:
 
 - Componente: `src/app/components/EventMap.js`
 - Biblioteca: `@react-google-maps/api`
-- Páginas: `/invite/[slug]` (página do convite)
+- Páginas:
+  - `/invite/[slug]/page.js` (página pública do convite para convidados)
+  - `/eventos/novo/page.js` (página de criação de evento para anfitriões)
 
 **Endpoints utilizados:**
 
@@ -117,7 +119,7 @@ O frontend integra-se com as seguintes APIs externas:
 
 **Uso no Frontend:**
 
-- Página: `src/app/invite/[slug]/page.js` (implementado diretamente na página do convite)
+- Página: `/invite/[slug]/page.js` (implementado diretamente na página do convite)
 - Funcionalidade: Exibir temperatura, condição climática e ícone do tempo
 - Limitação: Apenas eventos com data até 3 dias no futuro exibirão previsão
 
@@ -141,8 +143,8 @@ O frontend integra-se com as seguintes APIs externas:
 
 **Uso no Frontend:**
 
-- Chamada: **Direta do frontend** (não passa pelo backend)
-- Funcionalidade: Busca automática de endereço ao digitar CEP
+- Página: `/eventos/novo/page.js`
+- Funcionalidade: Quando o anfitrião digita um CEP ao criar um evento, busca automaticamente o endereço (rua, bairro, cidade, estado) para preencher os campos do formulário
 - Validação: CEP deve ter exatamente 8 dígitos
 
 **Endpoints utilizados:**
